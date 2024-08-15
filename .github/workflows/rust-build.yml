@@ -188,15 +188,10 @@ jobs:
   build-arm64:
     name: Build on ARM64 (Ubuntu 22.04)
     needs: version
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
 
       - name: Setup Rust
         run: |
