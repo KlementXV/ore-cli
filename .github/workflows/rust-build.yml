@@ -2,9 +2,7 @@ name: Rust Build
 
 on:
   release:
-    types: [published]
-  push:
-    
+    types: [published]    
 
 env:
   CARGO_TERM_COLOR: always

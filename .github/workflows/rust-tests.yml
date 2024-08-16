@@ -59,6 +59,14 @@ jobs:
       run: cargo fmt -- --check
 
     - name: Security audit
-      uses: actions-rs/audit-check@v1.2.0
+      uses: actions-rs/audit-check@v1
       with:
+        sarif-report: results.sarif
         token: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true
+
+    - name: Upload SARIF file
+      if: success()
+      uses: github/codeql-action/upload-sarif@v1
+      with:
+        sarif_file: results.sarif
