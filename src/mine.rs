@@ -105,7 +105,6 @@ impl Miner {
             .map(|i| {
                 let global_best_difficulty = Arc::clone(&global_best_difficulty);
                 std::thread::spawn({
-                    let proof = proof.clone();
                     let progress_bar = progress_bar.clone();
                     let mut memory = equix::SolverMemory::new();
                     move || {
@@ -135,12 +134,10 @@ impl Miner {
                                     best_nonce = nonce;
                                     best_difficulty = difficulty;
                                     best_hash = hx;
-                                    // {{ edit_1 }}
                                     if best_difficulty.gt(&*global_best_difficulty.read().unwrap())
                                     {
                                         *global_best_difficulty.write().unwrap() = best_difficulty;
                                     }
-                                    // {{ edit_1 }}
                                 }
                             }
 
@@ -241,19 +238,16 @@ impl Miner {
         if let Ok(accounts) = self.rpc_client.get_multiple_accounts(&BUS_ADDRESSES).await {
             let mut top_bus_balance: u64 = 0;
             let mut top_bus = BUS_ADDRESSES[0];
-            for account in accounts {
-                if let Some(account) = account {
-                    if let Ok(bus) = Bus::try_from_bytes(&account.data) {
-                        if bus.rewards.gt(&top_bus_balance) {
-                            top_bus_balance = bus.rewards;
-                            top_bus = BUS_ADDRESSES[bus.id as usize];
-                        }
+            for account in accounts.into_iter().flatten() {
+                if let Ok(bus) = Bus::try_from_bytes(&account.data) {
+                    if bus.rewards.gt(&top_bus_balance) {
+                        top_bus_balance = bus.rewards;
+                        top_bus = BUS_ADDRESSES[bus.id as usize];
                     }
                 }
             }
             return top_bus;
         }
-
         // Otherwise return a random bus
         let i = rand::thread_rng().gen_range(0..BUS_COUNT);
         BUS_ADDRESSES[i]

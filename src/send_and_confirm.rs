@@ -96,13 +96,7 @@ impl Miner {
             ];
             final_ixs.push(transfer(
                 &signer.pubkey(),
-                &Pubkey::from_str(
-                    &tip_accounts
-                        .choose(&mut rand::thread_rng())
-                        .unwrap()
-                        .to_string(),
-                )
-                .unwrap(),
+                &Pubkey::from_str(tip_accounts.choose(&mut rand::thread_rng()).unwrap()).unwrap(),
                 jito_tip,
             ));
             progress_bar.println(format!("  Jito tip: {} SOL", lamports_to_sol(jito_tip)));
@@ -177,72 +171,68 @@ impl Miner {
                         std::thread::sleep(Duration::from_millis(CONFIRM_DELAY));
                         match client.get_signature_statuses(&[sig]).await {
                             Ok(signature_statuses) => {
-                                for status in signature_statuses.value {
-                                    if let Some(status) = status {
-                                        if let Some(err) = status.err {
-                                            match err {
-                                                // Instruction error
-                                                solana_sdk::transaction::TransactionError::InstructionError(_, err) => {
-                                                    match err {
-                                                        // Custom instruction error, parse into OreError
-                                                        solana_program::instruction::InstructionError::Custom(err_code) => {
-                                                            match err_code {
-                                                                e if e == OreError::NeedsReset as u32 => {
-                                                                    attempts = 0;
-                                                                    log_error(&progress_bar, "Needs reset. Retrying...", false);
-                                                                    break 'confirm;
-                                                                },
-                                                                _ => {
-                                                                    log_error(&progress_bar, &err.to_string(), true);
-                                                                    return Err(ClientError {
-                                                                        request: None,
-                                                                        kind: ClientErrorKind::Custom(err.to_string()),
-                                                                    });
-                                                                }
+                                for status in signature_statuses.value.into_iter().flatten() {
+                                    if let Some(err) = status.err {
+                                        match err {
+                                            // Instruction error
+                                            solana_sdk::transaction::TransactionError::InstructionError(_, err) => {
+                                                match err {
+                                                    // Custom instruction error, parse into OreError
+                                                    solana_program::instruction::InstructionError::Custom(err_code) => {
+                                                        match err_code {
+                                                            e if e == OreError::NeedsReset as u32 => {
+                                                                attempts = 0;
+                                                                log_error(&progress_bar, "Needs reset. Retrying...", false);
+                                                                break 'confirm;
+                                                            },
+                                                            _ => {
+                                                                log_error(&progress_bar, &err.to_string(), true);
+                                                                return Err(ClientError {
+                                                                    request: None,
+                                                                    kind: ClientErrorKind::Custom(err.to_string()),
+                                                                });
                                                             }
-                                                        },
-
-                                                        // Non custom instruction error, return
-                                                        _ => {
-                                                            log_error(&progress_bar, &err.to_string(), true);
-                                                            return Err(ClientError {
-                                                                request: None,
-                                                                kind: ClientErrorKind::Custom(err.to_string()),
-                                                            });
                                                         }
-                                                    }
-                                                },
+                                                    },
 
-                                                // Non instruction error, return
-                                                _ => {
-                                                    log_error(&progress_bar, &err.to_string(), true);
-                                                    return Err(ClientError {
-                                                        request: None,
-                                                        kind: ClientErrorKind::Custom(err.to_string()),
-                                                    });
+                                                    // Non custom instruction error, return
+                                                    _ => {
+                                                        log_error(&progress_bar, &err.to_string(), true);
+                                                        return Err(ClientError {
+                                                            request: None,
+                                                            kind: ClientErrorKind::Custom(err.to_string()),
+                                                        });
+                                                    }
                                                 }
+                                            },
+
+                                            // Non instruction error, return
+                                            _ => {
+                                                log_error(&progress_bar, &err.to_string(), true);
+                                                return Err(ClientError {
+                                                    request: None,
+                                                    kind: ClientErrorKind::Custom(err.to_string()),
+                                                });
                                             }
-                                        } else if let Some(confirmation) =
-                                            status.confirmation_status
-                                        {
-                                            match confirmation {
-                                                TransactionConfirmationStatus::Processed => {}
-                                                TransactionConfirmationStatus::Confirmed
-                                                | TransactionConfirmationStatus::Finalized => {
-                                                    let now = Local::now();
-                                                    let formatted_time =
-                                                        now.format("%Y-%m-%d %H:%M:%S").to_string();
-                                                    progress_bar.println(format!(
-                                                        "  Timestamp: {}",
-                                                        formatted_time
-                                                    ));
-                                                    progress_bar.finish_with_message(format!(
-                                                        "{} {}",
-                                                        "OK".bold().green(),
-                                                        sig
-                                                    ));
-                                                    return Ok(sig);
-                                                }
+                                        }
+                                    } else if let Some(confirmation) = status.confirmation_status {
+                                        match confirmation {
+                                            TransactionConfirmationStatus::Processed => {}
+                                            TransactionConfirmationStatus::Confirmed
+                                            | TransactionConfirmationStatus::Finalized => {
+                                                let now = Local::now();
+                                                let formatted_time =
+                                                    now.format("%Y-%m-%d %H:%M:%S").to_string();
+                                                progress_bar.println(format!(
+                                                    "  Timestamp: {}",
+                                                    formatted_time
+                                                ));
+                                                progress_bar.finish_with_message(format!(
+                                                    "{} {}",
+                                                    "OK".bold().green(),
+                                                    sig
+                                                ));
+                                                return Ok(sig);
                                             }
                                         }
                                     }

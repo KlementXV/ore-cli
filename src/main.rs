@@ -44,6 +44,17 @@ struct Miner {
     pub tip: Arc<std::sync::RwLock<u64>>,
 }
 
+struct MinerConfig {
+    pub rpc_client: Arc<RpcClient>,
+    pub priority_fee: Option<u64>,
+    pub keypair_filepath: Option<String>,
+    pub dynamic_fee_url: Option<String>,
+    pub dynamic_fee: bool,
+    pub fee_payer_filepath: Option<String>,
+    pub jito_client: Arc<RpcClient>,
+    pub tip: Arc<std::sync::RwLock<u64>>,
+}
+
 #[derive(Subcommand, Debug)]
 enum Commands {
     #[command(about = "Fetch an account balance")]
@@ -201,16 +212,18 @@ async fn main() {
         });
     }
 
-    let miner = Arc::new(Miner::new(
-        Arc::new(rpc_client),
-        args.priority_fee,
-        Some(default_keypair),
-        args.dynamic_fee_url,
-        args.dynamic_fee,
-        Some(fee_payer_filepath),
-        Arc::new(jito_client),
+    let miner_config = MinerConfig {
+        rpc_client: Arc::new(rpc_client),
+        priority_fee: args.priority_fee,
+        keypair_filepath: Some(default_keypair),
+        dynamic_fee_url: args.dynamic_fee_url,
+        dynamic_fee: args.dynamic_fee,
+        fee_payer_filepath: Some(fee_payer_filepath),
+        jito_client: Arc::new(jito_client),
         tip,
-    ));
+    };
+
+    let miner = Arc::new(Miner::new(miner_config));
 
     // Execute user command.
     match args.command {
@@ -258,32 +271,23 @@ async fn main() {
 }
 
 impl Miner {
-    pub fn new(
-        rpc_client: Arc<RpcClient>,
-        priority_fee: Option<u64>,
-        keypair_filepath: Option<String>,
-        dynamic_fee_url: Option<String>,
-        dynamic_fee: bool,
-        fee_payer_filepath: Option<String>,
-        jito_client: Arc<RpcClient>,
-        tip: Arc<std::sync::RwLock<u64>>,
-    ) -> Self {
+    pub fn new(config: MinerConfig) -> Self {
         Self {
-            rpc_client,
-            keypair_filepath,
-            priority_fee,
-            dynamic_fee_url,
-            dynamic_fee,
-            fee_payer_filepath,
-            jito_client,
-            tip,
+            rpc_client: config.rpc_client,
+            keypair_filepath: config.keypair_filepath,
+            priority_fee: config.priority_fee,
+            dynamic_fee_url: config.dynamic_fee_url,
+            dynamic_fee: config.dynamic_fee,
+            fee_payer_filepath: config.fee_payer_filepath,
+            jito_client: config.jito_client,
+            tip: config.tip,
         }
     }
 
     pub fn signer(&self) -> Keypair {
         match self.keypair_filepath.clone() {
             Some(filepath) => read_keypair_file(filepath.clone())
-                .expect(format!("No keypair found at {}", filepath).as_str()),
+                .unwrap_or_else(|_| panic!("No keypair found at {}", filepath)),
             None => panic!("No keypair provided"),
         }
     }
@@ -291,7 +295,7 @@ impl Miner {
     pub fn fee_payer(&self) -> Keypair {
         match self.fee_payer_filepath.clone() {
             Some(filepath) => read_keypair_file(filepath.clone())
-                .expect(format!("No fee payer keypair found at {}", filepath).as_str()),
+                .unwrap_or_else(|_| panic!("No fee payer keypair found at {}", filepath)),
             None => panic!("No fee payer keypair provided"),
         }
     }
