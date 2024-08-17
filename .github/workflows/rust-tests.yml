@@ -22,8 +22,7 @@ jobs:
         override: true 
 
     - name: Install required cargo
-      run: cargo install clippy-sarif sarif-fmt cargo-audit cargo-audit-sarif
-
+      run: cargo install clippy-sarif sarif-fmt cargo-audit
     - name: Build
       run: cargo test --no-run --workspace --all-features
 
