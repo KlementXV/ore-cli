@@ -46,12 +46,7 @@ jobs:
         sarif_file: results_clippy.sarif
         wait-for-processing: true
 
-    - name: Run Cargo audit
-      run: |
-        cargo audit --json | cargo-audit-sarif | tee results_cargo-audit.sarif
-
-    - name: Upload Cargo audit results to GitHub
-      uses: github/codeql-action/upload-sarif@v3
+    - name: Security audit
+      uses: actions-rs/audit-check@v1.2.0
       with:
-        sarif_file: results_cargo-audit.sarif
-        wait-for-processing: true
+        token: ${{ secrets.GITHUB_TOKEN }}
