@@ -2,6 +2,11 @@ name: Rust Tests & Linting
 
 on:
   push:
+    paths:
+      - 'src/**'
+      - 'Cargo.lock'
+      - 'Cargo.toml'
+      - 'rust-toolchain.toml' 
 
 jobs:
   build_and_test:
