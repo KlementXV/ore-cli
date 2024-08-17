@@ -53,4 +53,7 @@ jobs:
       continue-on-error: true 
     
     - name: Debug - Check file existence
-      run: ls -alh target/dist
+      run: ls -alh
+
+    - name: Debug - Check file existence
+      run: tree
