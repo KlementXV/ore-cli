@@ -55,3 +55,6 @@ jobs:
     
     - name: Debug - Check file existence
       run: ls -alh
+
+    - name: Debug - Check file existence
+      run: tree
