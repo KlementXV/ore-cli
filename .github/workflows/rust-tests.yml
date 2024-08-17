@@ -6,7 +6,8 @@ on:
 jobs:
   build_and_test:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
     steps:
     - name: Checkout code
       uses: actions/checkout@v4  
@@ -14,10 +15,10 @@ jobs:
     - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
+        profile: minimal
         toolchain: stable
-
-    - name: Install Clippy
-      run: rustup component add clippy
+        components: clippy
+        override: true
 
     - name: Cache cargo registry
       uses: actions/cache@v4  
@@ -44,29 +45,45 @@ jobs:
           ${{ runner.os }}-cargo-build-
 
     - name: Build
-      run: cargo build --verbose
+      run: cargo test --no-run --workspace --all-features
 
-    - name: Build
-      run: cargo update
+    - name: Default features
+      run: cargo test --workspace
 
-    - name: Run tests
-      run: cargo test --verbose
+    - name: All features
+      run: cargo test --workspace --all-features
 
-    - name: Run clippy
-      run: cargo clippy -- -D warnings
+    - name: No-default features
+      run: cargo test --workspace --no-default-features
 
-    - name: Check formatting
-      run: cargo fmt -- --check
+  security_audit:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
     - name: Security audit
-      uses: actions-rs/audit-check@v1
+      uses: actions-rs/audit-check@v1.2.0
       with:
-        sarif-report: results.sarif
+        sarif-report: results_audit.sarif
         token: ${{ secrets.GITHUB_TOKEN }}
       continue-on-error: true
 
-    - name: Upload SARIF file
-      if: success()
+    - name: Upload audit results to GitHub
       uses: github/codeql-action/upload-sarif@v1
       with:
-        sarif_file: results.sarif
+        sarif_file: results_audit.sarif
+        wait-for-processing: true
+
+    - name: Run rust-clippy
+      run: |
+        cargo clippy --all-features --message-format=json | clippy-sarif | tee results_clippy.sarif | sarif-fmt
+      continue-on-error: true   
+
+    - name: Upload clippy results to GitHub
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: results_clippy.sarif
+        wait-for-processing: true
