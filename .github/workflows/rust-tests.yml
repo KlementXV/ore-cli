@@ -50,8 +50,6 @@ jobs:
       uses: actions-rs/audit-check@v1.2.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        sarif-report: results.sarif
-      continue-on-error: true 
     
     - name: Debug - Check file existence
       run: ls -alh
