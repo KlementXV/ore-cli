@@ -63,14 +63,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: stable
-        components: clippy
-        override: true
-
     - name: Run Clippy
       run: |
         cargo clippy --all-features --message-format=json | clippy-sarif | tee results_clippy.sarif | sarif-fmt
