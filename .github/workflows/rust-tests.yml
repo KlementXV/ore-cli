@@ -17,7 +17,6 @@ jobs:
       with:
         profile: minimal
         toolchain: stable
-        components: clippy
         override: true
 
     - name: Cache cargo registry
@@ -64,20 +63,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Security audit
-      uses: actions-rs/audit-check@v1.2.0
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
       with:
-        sarif-report: results_audit.sarif
-        token: ${{ secrets.GITHUB_TOKEN }}
-      continue-on-error: true
+        profile: minimal
+        toolchain: stable
+        components: clippy, cargo-audit, cargo-audit-sarif
+        override: true
 
-    - name: Upload audit results to GitHub
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: results_audit.sarif
-        wait-for-processing: true
-
-    - name: Run rust-clippy
+    - name: Run Clippy
       run: |
         cargo clippy --all-features --message-format=json | clippy-sarif | tee results_clippy.sarif | sarif-fmt
       continue-on-error: true   
@@ -86,4 +80,14 @@ jobs:
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: results_clippy.sarif
+        wait-for-processing: true
+
+    - name: Run Cargo audit
+      run: |
+        cargo audit --json | cargo-audit-sarif | tee results_cargo-audit.sarif
+
+    - name: Upload Cargo audit results to GitHub
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: results_cargo-audit.sarif
         wait-for-processing: true
