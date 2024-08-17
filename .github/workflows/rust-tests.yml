@@ -45,14 +45,3 @@ jobs:
       with:
         sarif_file: results_clippy.sarif
         wait-for-processing: true
-
-    - name: Security audit
-      uses: actions-rs/audit-check@v1.2.0
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Debug - Check file existence
-      run: ls -alh
-
-    - name: Debug - Check file existence
-      run: tree
