@@ -68,7 +68,7 @@ jobs:
       with:
         profile: minimal
         toolchain: stable
-        components: clippy, cargo-audit, cargo-audit-sarif
+        components: clippy
         override: true
 
     - name: Run Clippy
