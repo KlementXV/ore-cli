@@ -2,6 +2,10 @@
 
 A command line interface for ORE cryptocurrency mining.
 
+[![Rust Tests & Linting](https://github.com/KlementXV/ore-cli/actions/workflows/rust-tests.yml/badge.svg)](https://github.com/KlementXV/ore-cli/actions/workflows/rust-tests.yml)
+[![Rust Build](https://github.com/KlementXV/ore-cli/actions/workflows/rust-build.yml/badge.svg)](https://github.com/KlementXV/ore-cli/actions/workflows/rust-build.yml)
+[![Docker CI](https://github.com/KlementXV/ore-cli/actions/workflows/docker-build.yml/badge.svg)](https://github.com/KlementXV/ore-cli/actions/workflows/docker-build.yml)
+
 ## Install
 
 To install the CLI, use [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html):
