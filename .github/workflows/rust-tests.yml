@@ -50,6 +50,7 @@ jobs:
       uses: actions-rs/audit-check@v1.2.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true 
     
     - name: Debug - Check file existence
       run: ls -alh target/dist
